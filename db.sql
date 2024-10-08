@@ -81,8 +81,11 @@ DROP TABLE IF EXISTS `Product_info`;
 CREATE TABLE `Product_info` (
   `Product_id` varchar(50) NOT NULL,
   `Product_name` varchar(100) NOT NULL,
+  `Product_price` decimal(10,2) NOT NULL,
+  `Supplier_Company_id` varchar(50) DEFAULT NULL,
   PRIMARY KEY (`Product_id`),
-  UNIQUE KEY `Product_name` (`Product_name`)
+  KEY `Supplier_Company_id` (`Supplier_Company_id`),
+  CONSTRAINT `Product_info_ibfk_1` FOREIGN KEY (`Supplier_Company_id`) REFERENCES `Supplier_Company` (`Supplier_Company_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -92,6 +95,7 @@ CREATE TABLE `Product_info` (
 
 LOCK TABLES `Product_info` WRITE;
 /*!40000 ALTER TABLE `Product_info` DISABLE KEYS */;
+INSERT INTO `Product_info` VALUES ('cmt1','CEMENT',2000.00,'sca2b1'),('fe35','IRON',100.00,'sca2b1'),('fe45','IRON',50.00,'scpes1');
 /*!40000 ALTER TABLE `Product_info` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -142,7 +146,7 @@ CREATE TABLE `Supplier_Company` (
 
 LOCK TABLES `Supplier_Company` WRITE;
 /*!40000 ALTER TABLE `Supplier_Company` DISABLE KEYS */;
-INSERT INTO `Supplier_Company` VALUES ('sca2b1','a2b','$argon2id$v=19$m=65536,t=3,p=4$Favt62hF6yvhlu5oWMPBKw$UbWeXtr2m2UWd5bP5mx3npm+p+4Ddfej6XyQHXRy6oQ');
+INSERT INTO `Supplier_Company` VALUES ('sca2b1','a2b','$argon2id$v=19$m=65536,t=3,p=4$Favt62hF6yvhlu5oWMPBKw$UbWeXtr2m2UWd5bP5mx3npm+p+4Ddfej6XyQHXRy6oQ'),('scpes1','pes','$argon2id$v=19$m=65536,t=3,p=4$VjkVM9U6anUzBFqeRgx1cQ$EeBAAWLvtnKZvmYMu1x3MXHKLByx3LaDc+SAlLAGMgQ');
 /*!40000 ALTER TABLE `Supplier_Company` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -155,4 +159,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-10-08 18:09:51
+-- Dump completed on 2024-10-08 21:21:35
