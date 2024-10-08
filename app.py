@@ -1,5 +1,3 @@
-# implemented login and sign up features
-
 import os
 import streamlit as st
 import mysql.connector
@@ -77,12 +75,16 @@ def create_tables():
             INSERT INTO Shipment_Company (Shipment_Company_id, Supplier_Company_name)
             SELECT %s, %s
             WHERE NOT EXISTS (SELECT 1 FROM Shipment_Company WHERE Shipment_Company_id = %s)
-        """, (shipment_id, company_name, shipment_id) )
+        """, (shipment_id, company_name, shipment_id))
 
-    cursor.execute("""  
+    # Product_info table
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS Product_info (
             Product_id VARCHAR(50) PRIMARY KEY,
-            Product_name VARCHAR(100) NOT NULL UNIQUE
+            Product_name VARCHAR(100) NOT NULL,
+            Product_price DECIMAL(10, 2) NOT NULL,
+            Supplier_Company_id VARCHAR(50),      
+            FOREIGN KEY (Supplier_Company_id) REFERENCES Supplier_Company(Supplier_Company_id)
         )
     """)
 
@@ -270,6 +272,31 @@ def login_signup_page():
                     else:
                         st.error("Supplier ID must be alphanumeric")
 
+def add_product(product_id, product_name, product_price):
+    # Ensure product_name is in uppercase
+    product_name = product_name.upper()
+
+    conn = create_connection()
+    cursor = conn.cursor()
+
+    # Get Supplier_Company_id from session state
+    supplier_company_id = st.session_state.company_id
+
+    try:
+        # Insert product into Product_info table
+        cursor.execute("""
+            INSERT INTO Product_info (Product_id, Product_name, Product_price, Supplier_Company_id)
+            VALUES (%s, %s, %s, %s)
+        """, (product_id, product_name, product_price, supplier_company_id))
+        
+        conn.commit()
+        st.success("Product added successfully!")
+    except mysql.connector.Error as err:
+        st.error(f"Error: {err}")
+    finally:
+        cursor.close()
+        conn.close()
+
 def construction_company_page():
     conn = create_connection()
     cursor = conn.cursor()
@@ -314,11 +341,24 @@ def supplier_company_page():
     st.title(f"Welcome, {company_name}")
     st.write(f"This is the dashboard for Supply company {company_name} (ID: {st.session_state.company_id}).")
 
-    # Supplier Company page must be implemented here
+    # Supplier Company page: Add Product functionality
     st.subheader("Select Roles")
     role = st.selectbox("Role", ["Add Products", "Authorize Orders"])
     
-
+    # Implement "Add Products" form
+    if role == "Add Products":
+        with st.form("Add_Products"):
+            product_id = st.text_input("Product ID (Alphanumeric)")
+            product_name = st.text_input("Product Name")
+            product_price = st.number_input("Product Price", min_value=0.01, format="%.2f")
+            
+            if st.form_submit_button("Add Product"):
+                # Validate product_id is alphanumeric
+                if not product_id.isalnum():
+                    st.error("Product ID must be alphanumeric.")
+                else:
+                    # Call function to add the product
+                    add_product(product_id, product_name, product_price)
 
 def main():
     create_tables()
