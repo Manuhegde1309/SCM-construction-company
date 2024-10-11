@@ -45,6 +45,7 @@ def construction_company_page():
         st.write("place an order")
         with st.form("Place orders"):
             #product_id=st.multiselect("Id of the Product",df["Product_id"])
+            #this is for single type of product only.For multiple types,it is under development
             product_id=st.text_input("Id of the Product")
             Quantity=st.number_input("Quantity", min_value=1)
             supply_company_id=st.text_input("SupplyCompanyId (Alphanumeric)")
