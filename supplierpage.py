@@ -1,6 +1,9 @@
 import streamlit as st
 import mysql.connector
 from database import create_connection
+import pandas as pd
+import random
+import uuid
 
 def add_product(product_id, product_name, product_price):
     # Ensure product_name is in uppercase
@@ -48,21 +51,138 @@ def supplier_company_page():
     st.title(f"Welcome, {company_name}")
     st.write(f"This is the dashboard for Supply company {company_name} (ID: {st.session_state.company_id}).")
 
-    # Supplier Company page: Add Product functionality
+    # Supplier Company page: Add Product and Authorize Orders functionality
     st.subheader("Select Roles")
-    role = st.selectbox("Role", ["Add Products", "Authorize Orders"])
+    role = st.selectbox("Role", ["Add Products", "Authorize Orders"], key="supplier_role_selectbox")
     
-    # Implement "Add Products" form
+    # Implement "Add Products" functionality
     if role == "Add Products":
         with st.form("Add_Products"):
-            product_id = st.text_input("Product ID (Alphanumeric)")
-            product_name = st.text_input("Product Name")
-            product_price = st.number_input("Product Price", min_value=0.01)
+            product_id = st.text_input("Product ID (Alphanumeric)", key="add_product_id")
+            product_name = st.text_input("Product Name", key="add_product_name")
+            product_price = st.number_input("Product Price", min_value=0.01, format="%.2f", key="add_product_price")
             
-            submit_button = st.form_submit_button(label="Add Product")
-            
-            if submit_button:
-                add_product(product_id, product_name, product_price)
-    # Implement "Authorize Orders" functionality
+            if st.form_submit_button("Add Product"):
+                # Validate product_id is alphanumeric
+                if not product_id.isalnum():
+                    st.error("Product ID must be alphanumeric.")
+                else:
+                    # Call function to add the product
+                    add_product(product_id, product_name, product_price)
+
     elif role == "Authorize Orders":
+        conn = create_connection()
+        cursor = conn.cursor()
         st.write("Authorize Orders Page")
+
+        # Show only pending orders for the logged-in supplier company
+        cursor.execute("""
+            SELECT * FROM Order_info 
+            WHERE Status = 'Pending' AND Supplier_Company_Id = %s
+        """, (st.session_state.company_id,))
+
+        data = cursor.fetchall()
+        columns = cursor.column_names
+        df = pd.DataFrame(data, columns=columns)
+        st.subheader("Pending Orders List")
+        st.dataframe(df)
+
+        st.write("Authorize an order")
+        
+        # Order ID input
+        order_id = st.text_input("ID of the Order", key="authorize_order_id")
+        add_status = st.selectbox("Add status", ["Accept", "Reject"], key="authorize_order_status")
+
+        if add_status == "Accept":
+            delivery_company = st.selectbox("Select Delivery Company", ["DHL Group", "FedEx Corp"], key="authorize_delivery_company")
+            submit_button = st.button("Deliver Order")
+        else:  # Reject
+            submit_button = st.button("Reject Order")
+
+        if submit_button:
+            if add_status == "Accept":
+                # Check if the selected delivery company exists
+                cursor.execute("SELECT Shipment_Company_id FROM Shipment_Company WHERE Shipment_Company_name = %s", (delivery_company,))
+                shipment_company_id_result = cursor.fetchone()
+                shipment_company_id = shipment_company_id_result[0] if shipment_company_id_result else None
+
+                if not shipment_company_id:
+                    st.error(f"Delivery company {delivery_company} does not exist.")
+                else:
+                    # Fetch order details
+                    cursor.execute("""
+                        SELECT Product_id, Quantity, Cost, Construction_Company_Id
+                        FROM Order_info 
+                        WHERE Order_id = %s AND Status = 'Pending' AND Supplier_Company_Id = %s
+                    """, (order_id, st.session_state.company_id))
+                    order_details = cursor.fetchone()
+
+                    if order_details:
+                        product_id, quantity, total_cost, construction_company_id = order_details
+                        
+                        # Fetch the product name
+                        cursor.execute("SELECT Product_name FROM Product_info WHERE Product_id = %s", (product_id,))
+                        product_name = cursor.fetchone()[0]
+                        
+                        # Fetch the construction company name
+                        cursor.execute("SELECT Construction_Company_name FROM Construction_Company WHERE Construction_Company_id = %s", (construction_company_id,))
+                        company_name = cursor.fetchone()[0]
+                        
+                        # Check cash balance
+                        cursor.execute("SELECT Cash_Balance FROM Construction_Company WHERE Construction_Company_id = %s", (construction_company_id,))
+                        cash_balance = cursor.fetchone()[0]
+
+                        if cash_balance >= total_cost:
+                            # Deduct the cost from Construction_Company's balance
+                            cursor.execute("""
+                                UPDATE Construction_Company 
+                                SET Cash_Balance = Cash_Balance - %s
+                                WHERE Construction_Company_id = %s
+                            """, (total_cost, construction_company_id))
+                            
+                            # Check if the product exists in the inventory of the construction company
+                            cursor.execute("""
+                                SELECT Quantity FROM Company_Inventory 
+                                WHERE Construction_Company_name = %s AND Product_name = %s
+                            """, (company_name, product_name))
+                            existing_quantity = cursor.fetchone()
+                            
+                            if existing_quantity:
+                                # Update the quantity if the product already exists
+                                cursor.execute("""
+                                    UPDATE Company_Inventory 
+                                    SET Quantity = Quantity + %s 
+                                    WHERE Construction_Company_name = %s AND Product_name = %s
+                                """, (quantity, company_name, product_name))
+                            else:
+                                # Insert a new record into Company_Inventory
+                                cursor.execute("""
+                                    INSERT INTO Company_Inventory (Construction_Company_name, Product_name, Quantity) 
+                                    VALUES (%s, %s, %s)
+                                """, (company_name, product_name, quantity))
+                            
+                            # Update the status of the order to Accepted and set Shipment_Company_Id
+                            cursor.execute("""
+                                UPDATE Order_info 
+                                SET Status = 'Accepted', Shipment_Company_Id = %s 
+                                WHERE Order_id = %s
+                            """, (shipment_company_id, order_id))
+                            
+                            conn.commit()
+                            st.success(f"Order {order_id} has been delivered successfully!")
+                        else:
+                            st.error(f"Construction company {company_name} has insufficient balance.")
+                    else:
+                        st.error("Invalid Order ID or the order is not pending.")
+            else:  # Reject
+                # Update the status of the order to Rejected
+                cursor.execute("""
+                    UPDATE Order_info 
+                    SET Status = 'Rejected' 
+                    WHERE Order_id = %s AND Status = 'Pending'
+                """, (order_id,))
+                conn.commit()
+                st.success(f"Order {order_id} has been rejected successfully!")
+    
+        cursor.close()
+        conn.close()
