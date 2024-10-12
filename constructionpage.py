@@ -22,7 +22,7 @@ def construction_company_page():
     st.title(f"Welcome, {company_name}")
     st.write(f"This is the dashboard for Construction company {company_name} (ID: {st.session_state.company_id}).")    
     
-    choice = st.radio("Select Action", ["Add money/balance", "Place Orders"])
+    choice = st.selectbox("Select Action", ["Add money/balance", "Place Orders"])
     if choice=="Add money/balance":
         with st.form('Construction company page'):
             money= st.number_input("money", min_value=10000)
@@ -44,12 +44,16 @@ def construction_company_page():
         st.dataframe(df)
         st.write("place an order")
         with st.form("Place orders"):
-            #product_id=st.multiselect("Id of the Product",df["Product_id"])
+            #product_ids=st.multiselect("Id of the Product",df["Product_id"])
             #this is for single type of product only.For multiple types,it is under development
             product_id=st.text_input("Id of the Product")
             Quantity=st.number_input("Quantity", min_value=1)
-            supply_company_id=st.text_input("SupplyCompanyId (Alphanumeric)")
             if st.form_submit_button("Place Orders"):
+                cursor.execute("""
+                select supplier_company_id from product_info where product_id=%s
+                """,(product_id,))
+                placeholder=cursor.fetchone()
+                supply_company_id=placeholder[0] if placeholder else "none"
                 cursor.execute("""
                     select (Product_price*%s) as total_price from product_info where product_id=%s and supplier_company_id=%s
                 """,(Quantity,product_id,supply_company_id))

@@ -1,13 +1,13 @@
--- MySQL dump 10.13  Distrib 8.0.39, for Linux (x86_64)
+-- MySQL dump 10.13  Distrib 9.0.1, for macos14 (arm64)
 --
 -- Host: localhost    Database: dbms_project_testing
 -- ------------------------------------------------------
--- Server version	8.0.39
+-- Server version	9.0.1
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!50503 SET NAMES utf8 */;
+/*!50503 SET NAMES utf8mb4 */;
 /*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
 /*!40103 SET TIME_ZONE='+00:00' */;
 /*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
@@ -67,8 +67,43 @@ CREATE TABLE `Construction_Company` (
 
 LOCK TABLES `Construction_Company` WRITE;
 /*!40000 ALTER TABLE `Construction_Company` DISABLE KEYS */;
-INSERT INTO `Construction_Company` VALUES ('ccpes1','pes','admh13',10000000.00),('ccpg1','Prestige','admf31',10000000.00);
+INSERT INTO `Construction_Company` VALUES ('ccpes1','pes','admh13',10000000.00),('ccpg1','Prestige','admf31',10010001.00);
 /*!40000 ALTER TABLE `Construction_Company` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `Order_info`
+--
+
+DROP TABLE IF EXISTS `Order_info`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `Order_info` (
+  `Order_id` varchar(50) NOT NULL,
+  `Product_id` varchar(50) NOT NULL,
+  `Construction_Company_id` varchar(50) NOT NULL,
+  `Supplier_Company_id` varchar(50) NOT NULL,
+  `Quantity` decimal(10,2) DEFAULT '0.00',
+  `Cost` decimal(10,2) DEFAULT '0.00',
+  `Status` enum('Pending','Accepted','Rejected') DEFAULT 'Pending',
+  PRIMARY KEY (`Order_id`),
+  KEY `Product_id` (`Product_id`),
+  KEY `Construction_Company_id` (`Construction_Company_id`),
+  KEY `Supplier_Company_id` (`Supplier_Company_id`),
+  CONSTRAINT `order_info_ibfk_1` FOREIGN KEY (`Product_id`) REFERENCES `Product_info` (`Product_id`),
+  CONSTRAINT `order_info_ibfk_2` FOREIGN KEY (`Construction_Company_id`) REFERENCES `Construction_Company` (`Construction_Company_id`),
+  CONSTRAINT `order_info_ibfk_3` FOREIGN KEY (`Supplier_Company_id`) REFERENCES `Supplier_Company` (`Supplier_Company_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `Order_info`
+--
+
+LOCK TABLES `Order_info` WRITE;
+/*!40000 ALTER TABLE `Order_info` DISABLE KEYS */;
+INSERT INTO `Order_info` VALUES ('OR4c17','p234','ccpg1','sca2b1',3.00,3000.00,'Pending'),('ORab58','cmt1','ccpg1','sca2b1',100.00,200000.00,'Pending');
+/*!40000 ALTER TABLE `Order_info` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -95,7 +130,7 @@ CREATE TABLE `Product_info` (
 
 LOCK TABLES `Product_info` WRITE;
 /*!40000 ALTER TABLE `Product_info` DISABLE KEYS */;
-INSERT INTO `Product_info` VALUES ('cmt1','CEMENT',2000.00,'sca2b1'),('fe35','IRON',100.00,'sca2b1'),('fe45','IRON',50.00,'scpes1');
+INSERT INTO `Product_info` VALUES ('cmt1','CEMENT',2000.00,'sca2b1'),('fe35','IRON',100.00,'sca2b1'),('fe45','IRON',50.00,'scpes1'),('p234','BRONZE',1000.00,'sca2b1');
 /*!40000 ALTER TABLE `Product_info` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -159,4 +194,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-10-08 21:21:35
+-- Dump completed on 2024-10-12 14:07:56
