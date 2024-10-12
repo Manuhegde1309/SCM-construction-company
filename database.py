@@ -76,6 +76,21 @@ def create_tables():
             FOREIGN KEY (Supplier_Company_id) REFERENCES Supplier_Company(Supplier_Company_id)
         )
     """)
+    #orders table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS Order_info (
+        Order_id VARCHAR(50) PRIMARY KEY,
+        Product_id VARCHAR(50) NOT NULL,
+        Construction_Company_id VARCHAR(50) NOT NULL,
+        Supplier_Company_id VARCHAR(50) NOT NULL,
+        Quantity DECIMAL(10,2) DEFAULT 0,
+        Cost DECIMAL(10,2) default 0.0,
+        Status ENUM('Pending', 'Accepted', 'Rejected') DEFAULT 'Pending',      
+        FOREIGN KEY (Product_id) REFERENCES Product_info(Product_id),
+        FOREIGN KEY (Construction_Company_id) REFERENCES Construction_Company(Construction_Company_id),
+        FOREIGN KEY (Supplier_Company_id) REFERENCES Supplier_Company(Supplier_Company_id)
+        )
+    """)
 
     conn.commit()
     cursor.close()
