@@ -55,7 +55,7 @@ CREATE TABLE `Company_Inventory` (
   `Product_name` varchar(100) NOT NULL,
   `Quantity` int NOT NULL,
   PRIMARY KEY (`Inventory_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -64,7 +64,7 @@ CREATE TABLE `Company_Inventory` (
 
 LOCK TABLES `Company_Inventory` WRITE;
 /*!40000 ALTER TABLE `Company_Inventory` DISABLE KEYS */;
-INSERT INTO `Company_Inventory` VALUES (2,'Prestige','CEMENT',50),(3,'Prestige','IRON',50);
+INSERT INTO `Company_Inventory` VALUES (2,'Prestige','CEMENT',50),(3,'Prestige','IRON',50),(4,'Ashed','IRON',50);
 /*!40000 ALTER TABLE `Company_Inventory` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -93,7 +93,7 @@ CREATE TABLE `Construction_Company` (
 
 LOCK TABLES `Construction_Company` WRITE;
 /*!40000 ALTER TABLE `Construction_Company` DISABLE KEYS */;
-INSERT INTO `Construction_Company` VALUES ('ccah1','Ashed',10000000.00,'admh13'),('ccpg1','Prestige',8973751.00,'admf31');
+INSERT INTO `Construction_Company` VALUES ('ccah1','Ashed',9991000.00,'admh13'),('ccpg1','Prestige',8973751.00,'admf31');
 /*!40000 ALTER TABLE `Construction_Company` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -131,7 +131,7 @@ CREATE TABLE `Order_info` (
 
 LOCK TABLES `Order_info` WRITE;
 /*!40000 ALTER TABLE `Order_info` DISABLE KEYS */;
-INSERT INTO `Order_info` VALUES ('OR07e1','cmt1','ccah1','sca2b1',NULL,50,100000.00,'Rejected'),('OR8708','cmt1','ccpg1','sca2b1','FDX',10,20000.00,'Accepted'),('ORbd1f','fe45','ccpg1','scpes1','DHL',25,2500.00,'Accepted'),('ORc446','cmt2','ccpg1','scpes1','DHL',40,1000000.00,'Accepted'),('ORfc76','fe35','ccpg1','sca2b1','FDX',25,3750.00,'Accepted');
+INSERT INTO `Order_info` VALUES ('OR07e1','cmt1','ccah1','sca2b1',NULL,50,100000.00,'Rejected'),('OR256f','fe35','ccah1','sca2b1','FDX',60,9000.00,'Accepted'),('OR6af6','nl1','ccah1','scpes1',NULL,2,100.00,'Pending'),('OR8708','cmt1','ccpg1','sca2b1','FDX',10,20000.00,'Accepted'),('ORbd1f','fe45','ccpg1','scpes1','DHL',25,2500.00,'Accepted'),('ORc446','cmt2','ccpg1','scpes1','DHL',40,1000000.00,'Accepted'),('ORfc76','fe35','ccpg1','sca2b1','FDX',25,3750.00,'Accepted');
 /*!40000 ALTER TABLE `Order_info` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -159,7 +159,7 @@ CREATE TABLE `Product_info` (
 
 LOCK TABLES `Product_info` WRITE;
 /*!40000 ALTER TABLE `Product_info` DISABLE KEYS */;
-INSERT INTO `Product_info` VALUES ('cmt1','CEMENT',2000.00,'sca2b1'),('cmt2','CEMENT',25000.00,'scpes1'),('fe35','IRON',150.00,'sca2b1'),('fe45','IRON',100.00,'scpes1');
+INSERT INTO `Product_info` VALUES ('cmt1','CEMENT',2000.00,'sca2b1'),('cmt2','CEMENT',25000.00,'scpes1'),('fe35','IRON',150.00,'sca2b1'),('fe45','IRON',100.00,'scpes1'),('nl1','NAIL',50.00,'scpes1');
 /*!40000 ALTER TABLE `Product_info` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -223,4 +223,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-10-12 22:53:47
+-- Dump completed on 2024-10-13 15:34:35
