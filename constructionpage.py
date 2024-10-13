@@ -26,7 +26,7 @@ def construction_company_page():
     st.write(f"This is the dashboard for Construction company {company_name} (ID: {st.session_state.company_id}).")    
     
     # Construction Company page must be implemented here
-    choice = st.selectbox("Select Action", ["Add money/balance", "Place Orders", "Check Inventory"], key="construction_company_actions")  # Added unique key
+    choice = st.selectbox("Select Action", ["Add money/balance", "Place Orders", "Check Inventory","Delete from inventory","Check transactions"], key="construction_company_actions")  # Added unique key
     if choice == "Add money/balance":
         conn = create_connection()
         cursor = conn.cursor()
@@ -51,7 +51,7 @@ def construction_company_page():
         st.dataframe(df)
         st.write("Place an order")
         with st.form("Place orders"):
-            product_id = st.text_input("Id of the Product", key="order_product_id")
+            product_id = st.selectbox("Id of the Product", key="order_product_id",options=df["Product_id"])
             Quantity = st.number_input("Quantity", min_value=1, key="order_quantity")
             if st.form_submit_button("Place Orders"):
                 cursor.execute("""
@@ -102,5 +102,47 @@ def construction_company_page():
             st.dataframe(df)
         else:
             st.warning("No products in inventory for this company.")
+    elif choice=="Delete from inventory":
+        conn = create_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+        select * from company_inventory
+        """)
+        result=cursor.fetchall()
+        columns = cursor.column_names
+        df = pd.DataFrame(result, columns=columns)
+        st.dataframe(df)
+        with st.form("remove from inventory"):
+            inventory_id=st.selectbox("select product to remove/delete",options=df["Inventory_id"])
+            quantity=st.number_input("how many to remove?",min_value=1)
+            if st.form_submit_button("submit"):
+                update_query = """
+                UPDATE company_inventory AS outer_ci
+                JOIN (
+                SELECT inventory_id, quantity - %s AS new_quantity
+                FROM company_inventory
+                WHERE inventory_id = %s
+                ) AS subquery
+                ON outer_ci.inventory_id = subquery.inventory_id
+                SET outer_ci.quantity = subquery.new_quantity
+                WHERE outer_ci.inventory_id = %s;
+                """
+                cursor.execute(update_query, (quantity, inventory_id, inventory_id))
+                cursor.execute("""delete from company_inventory where inventory_id=%s and quantity<=0""",(inventory_id,))
+                conn.commit()
+                st.success("inventory updated")
+        
+    elif choice=="Check transactions":
+        conn = create_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+        select * from order_info where construction_company_id=%s
+        """,(st.session_state.company_id,))
+        result=cursor.fetchall()
+        columns = cursor.column_names
+        df = pd.DataFrame(result, columns=columns)
+        st.write("Orders from this company")
+        st.dataframe(df)
+        
     cursor.close()
     conn.close()

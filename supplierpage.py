@@ -53,7 +53,7 @@ def supplier_company_page():
 
     # Supplier Company page: Add Product and Authorize Orders functionality
     st.subheader("Select Roles")
-    role = st.selectbox("Role", ["Add Products", "Authorize Orders"], key="supplier_role_selectbox")
+    role = st.selectbox("Role", ["Add Products", "Authorize Orders","Check transactions"], key="supplier_role_selectbox")
     
     # Implement "Add Products" functionality
     if role == "Add Products":
@@ -183,6 +183,17 @@ def supplier_company_page():
                 """, (order_id,))
                 conn.commit()
                 st.success(f"Order {order_id} has been rejected successfully!")
-    
+    elif role=="Check transactions":
+        conn = create_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+        select * from order_info where supplier_company_id=%s
+        """,(st.session_state.company_id,))
+        result=cursor.fetchall()
+        columns = cursor.column_names
+        df = pd.DataFrame(result, columns=columns)
+        st.write("Orders from this company")
+        st.dataframe(df)
+        
         cursor.close()
         conn.close()
