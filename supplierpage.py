@@ -289,3 +289,18 @@ def supplier_company_page():
         
         cursor.close()
         conn.close()
+
+    elif role=="Check transactions":
+        conn = create_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+        select * from Order_info where Supplier_Company_Id=%s
+        """,(st.session_state.company_id,))
+        result=cursor.fetchall()
+        columns = cursor.column_names
+        df = pd.DataFrame(result, columns=columns)
+        st.write("Orders from this company")
+        st.dataframe(df)
+        
+        cursor.close()
+        conn.close()
