@@ -102,12 +102,16 @@ def construction_company_page():
             st.dataframe(df)
         else:
             st.warning("No products in inventory for this company.")
+    
     elif choice=="Delete from inventory":
         conn = create_connection()
         cursor = conn.cursor()
         cursor.execute("""
-        select * from company_inventory
-        """)
+        select * from Company_Inventory where Construction_Company_Name=(SELECT Construction_Company_name 
+        FROM Construction_Company 
+        WHERE Construction_Company_id = %s)
+        """,(st.session_state.company_id,))
+        
         result=cursor.fetchall()
         columns = cursor.column_names
         df = pd.DataFrame(result, columns=columns)
@@ -117,18 +121,18 @@ def construction_company_page():
             quantity=st.number_input("how many to remove?",min_value=1)
             if st.form_submit_button("submit"):
                 update_query = """
-                UPDATE company_inventory AS outer_ci
+                UPDATE Company_Inventory AS outer_ci
                 JOIN (
-                SELECT inventory_id, quantity - %s AS new_quantity
-                FROM company_inventory
-                WHERE inventory_id = %s
+                SELECT Inventory_id, Quantity - %s AS new_quantity
+                FROM Company_Inventory
+                WHERE Inventory_id = %s
                 ) AS subquery
                 ON outer_ci.inventory_id = subquery.inventory_id
                 SET outer_ci.quantity = subquery.new_quantity
                 WHERE outer_ci.inventory_id = %s;
                 """
                 cursor.execute(update_query, (quantity, inventory_id, inventory_id))
-                cursor.execute("""delete from company_inventory where inventory_id=%s and quantity<=0""",(inventory_id,))
+                cursor.execute("""delete from Company_Inventory where Inventory_id=%s and Quantity<=0""",(inventory_id,))
                 conn.commit()
                 st.success("inventory updated")
         
@@ -136,7 +140,7 @@ def construction_company_page():
         conn = create_connection()
         cursor = conn.cursor()
         cursor.execute("""
-        select * from order_info where construction_company_id=%s
+        select * from Order_info where Construction_Company_Id=%s
         """,(st.session_state.company_id,))
         result=cursor.fetchall()
         columns = cursor.column_names
