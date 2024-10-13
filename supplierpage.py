@@ -53,7 +53,7 @@ def supplier_company_page():
 
     # Supplier Company page: Add Product and Authorize Orders functionality
     st.subheader("Select Roles")
-    role = st.selectbox("Role", ["Add Products", "Authorize Orders","Check transactions"], key="supplier_role_selectbox")
+    role = st.selectbox("Role", ["Add Products", "Authorize Orders","Check transactions","Delete Product","Update Product"], key="supplier_role_selectbox")
     
     # Implement "Add Products" functionality
     if role == "Add Products":
@@ -183,17 +183,109 @@ def supplier_company_page():
                 """, (order_id,))
                 conn.commit()
                 st.success(f"Order {order_id} has been rejected successfully!")
-    elif role=="Check transactions":
+    
+    elif role == "Delete Product":
         conn = create_connection()
         cursor = conn.cursor()
+
+        # Fetch products belonging to the current supplier company
         cursor.execute("""
-        select * from order_info where supplier_company_id=%s
-        """,(st.session_state.company_id,))
-        result=cursor.fetchall()
-        columns = cursor.column_names
-        df = pd.DataFrame(result, columns=columns)
-        st.write("Orders from this company")
+            SELECT Product_id, Product_name 
+            FROM Product_info 
+            WHERE Supplier_Company_id = %s
+        """, (st.session_state.company_id,))
+
+        products = cursor.fetchall()
+
+        # If there are products, display them in a selectbox
+        if products:
+            product_ids = [product[0] for product in products]  # Extract product_ids
+            selected_product_id = st.selectbox("Select Product ID to delete:", product_ids)
+
+            if st.button("Delete Product"):
+                try:
+                    # Temporarily disable foreign key checks
+                    cursor.execute("SET FOREIGN_KEY_CHECKS = 0;")
+
+                    # Proceed to delete the product
+                    cursor.execute("DELETE FROM Product_info WHERE Product_id = %s", (selected_product_id,))
+                    conn.commit()
+                    st.success(f"Product {selected_product_id} deleted successfully!")
+                    
+                    # Re-enable foreign key checks
+                    cursor.execute("SET FOREIGN_KEY_CHECKS = 1;")
+                except mysql.connector.Error as err:
+                    st.error(f"Error: {err}")
+        else:
+            st.info("No products available for deletion.")
+
+        cursor.close()
+        conn.close()
+
+    elif role == "Update Product":
+        conn = create_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT Product_id, Product_name, Product_price 
+            FROM Product_info 
+            WHERE Supplier_Company_id = %s
+        """, (st.session_state.company_id,))
+        
+        products = cursor.fetchall()
+        df = pd.DataFrame(products, columns=["Product ID", "Product Name", "Product Price"])
+        st.subheader("Current Products")
         st.dataframe(df)
+
+        product_options = [product[0] for product in products]  # Extract product IDs for selectbox
+        selected_product_id = st.selectbox("Select the Product ID to Update:", product_options, key="update_product_selectbox")
+
+        cursor.execute("""
+            SELECT Product_name, Product_price 
+            FROM Product_info 
+            WHERE Product_id = %s AND Supplier_Company_id = %s
+        """, (selected_product_id, st.session_state.company_id))
+        
+        product_details = cursor.fetchone()
+
+        if product_details:
+            current_product_name, current_product_price = product_details
+            
+            new_product_id = st.text_input("New Product ID (Leave blank to keep current)", value=selected_product_id, key="new_product_id")
+
+            new_product_price = st.number_input("New Product Price", value=float(current_product_price), min_value=0.01, format="%.2f", key="new_product_price")
+
+            cursor.execute("""
+                SELECT COUNT(*) 
+                FROM Order_info 
+                WHERE Product_id = %s AND Status = 'Pending'
+            """, (selected_product_id,))
+            pending_orders_count = cursor.fetchone()[0]
+
+            if pending_orders_count > 0:
+                st.warning("Cannot update this product as there are pending orders.")
+            else:
+                if st.button("Update Product"):
+                    try:
+                        if new_product_id:
+                            cursor.execute("""
+                                UPDATE Product_info 
+                                SET Product_id = %s, Product_price = %s 
+                                WHERE Product_id = %s AND Supplier_Company_id = %s
+                            """, (new_product_id, new_product_price, selected_product_id, st.session_state.company_id))
+                        else:
+                            cursor.execute("""
+                                UPDATE Product_info 
+                                SET Product_price = %s 
+                                WHERE Product_id = %s AND Supplier_Company_id = %s
+                            """, (new_product_price, selected_product_id, st.session_state.company_id))
+                        
+                        conn.commit()
+                        st.success("Product updated successfully!")
+                    except mysql.connector.Error as err:
+                        st.error(f"Error: {err}")
+        else:
+            st.error("Product ID not found or does not belong to your company.")
         
         cursor.close()
         conn.close()
