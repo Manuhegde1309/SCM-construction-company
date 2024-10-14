@@ -2,7 +2,23 @@ import uuid
 import streamlit as st
 from database import create_connection
 import pandas as pd
-import random
+import mysql.connector
+
+def get_order_info(company_id, company_type):
+    conn = create_connection()
+    cursor=conn.cursor()
+    if conn and cursor:
+        try:
+            cursor.callproc('get_order_info', [company_id, company_type])
+            for result in cursor.stored_results():
+                orders = result.fetchall()
+                return orders
+        except mysql.connector.Error as err:
+            st.error(f"Error: {err}")
+        finally:
+            cursor.close()
+            conn.close()
+    return []
 
 def construction_company_page():
     conn = create_connection()
@@ -139,14 +155,12 @@ def construction_company_page():
     elif choice=="Check transactions":
         conn = create_connection()
         cursor = conn.cursor()
-        cursor.execute("""
-        select * from Order_info where Construction_Company_Id=%s
-        """,(st.session_state.company_id,))
-        result=cursor.fetchall()
-        columns = cursor.column_names
-        df = pd.DataFrame(result, columns=columns)
-        st.write("Orders from this company")
-        st.dataframe(df)
+        orders=get_order_info(st.session_state.company_id,'CONSTRUCTION')
+        if orders:
+            st.write(f"Order Information for company with ID {st.session_state.company_id}:")
+            st.table(orders)
+        else:
+            st.write("No orders found.")
         
     cursor.close()
     conn.close()

@@ -105,7 +105,23 @@ def create_tables():
             Quantity INT NOT NULL
         )
     """)
-
+    #procedure creation
+    cursor.execute("""
+                drop procedure if exists get_order_info;
+            """)
+    cursor.execute("""
+                create procedure get_order_info(
+                    IN in_company_id VARCHAR(50),
+                    IN company_type ENUM('CONSTRUCTION', 'SUPPLIER')
+                )
+                BEGIN
+                    if company_type = 'CONSTRUCTION' THEN
+                        SELECT * FROM Order_info WHERE Construction_Company_Id = in_company_id;
+                    elseif company_type = 'SUPPLIER' THEN
+                        SELECT * FROM Order_info WHERE Supplier_Company_Id = in_company_id;
+                    end if;
+                end
+            """)
     conn.commit()
     cursor.close()
     conn.close()

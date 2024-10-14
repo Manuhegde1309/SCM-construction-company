@@ -5,6 +5,22 @@ import pandas as pd
 import random
 import uuid
 
+def get_order_info(company_id, company_type):
+    conn = create_connection()
+    cursor=conn.cursor()
+    if conn and cursor:
+        try:
+            cursor.callproc('get_order_info', [company_id, company_type])
+            for result in cursor.stored_results():
+                orders = result.fetchall()
+                return orders
+        except mysql.connector.Error as err:
+            st.error(f"Error: {err}")
+        finally:
+            cursor.close()
+            conn.close()
+    return []
+
 def add_product(product_id, product_name, product_price):
     # Ensure product_name is in uppercase
     product_name = product_name.upper()
@@ -293,14 +309,12 @@ def supplier_company_page():
     elif role=="Check transactions":
         conn = create_connection()
         cursor = conn.cursor()
-        cursor.execute("""
-        select * from Order_info where Supplier_Company_Id=%s
-        """,(st.session_state.company_id,))
-        result=cursor.fetchall()
-        columns = cursor.column_names
-        df = pd.DataFrame(result, columns=columns)
-        st.write("Orders from this company")
-        st.dataframe(df)
+        orders=get_order_info(st.session_state.company_id,'SUPPLIER')
+        if orders:
+            st.write(f"Order Information for company with ID {st.session_state.company_id}:")
+            st.table(orders)
+        else:
+            st.write("No orders found.")
         
         cursor.close()
         conn.close()
