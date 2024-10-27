@@ -6,7 +6,7 @@ def create_connection():
         host="localhost",
         user="root",
         password=os.getenv('db_password'),
-        database=os.getenv('database')
+        database="dbms_project_testing1"
     )
     return connection
 
@@ -74,6 +74,7 @@ def create_tables():
             Product_name VARCHAR(100) NOT NULL,
             Product_price DECIMAL(10, 2) NOT NULL,
             Supplier_Company_id VARCHAR(50),
+            Stock INT DEFAULT 10000,
             FOREIGN KEY (Supplier_Company_id) REFERENCES Supplier_Company(Supplier_Company_id)
         )
     """)
@@ -99,12 +100,13 @@ def create_tables():
     # Company_Inventory table
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS Company_Inventory (
-            Inventory_id INT AUTO_INCREMENT PRIMARY KEY,
-            Construction_Company_name VARCHAR(100) NOT NULL,
+            Construction_Company_Id VARCHAR(50) NOT NULL,
             Product_name VARCHAR(100) NOT NULL,
-            Quantity INT NOT NULL
+            Quantity INT NOT NULL,
+            FOREIGN KEY (Construction_Company_Id) REFERENCES Construction_Company(Construction_Company_id)
         )
     """)
+    
     #procedure creation
     cursor.execute("""
                 drop procedure if exists get_order_info;
@@ -122,6 +124,7 @@ def create_tables():
                     end if;
                 end
             """)
+    
     conn.commit()
     cursor.close()
     conn.close()

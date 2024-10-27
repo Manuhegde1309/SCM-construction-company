@@ -2,6 +2,7 @@ import uuid
 import streamlit as st
 from database import create_connection
 import pandas as pd
+import random
 import mysql.connector
 
 def get_order_info(company_id, company_type):
@@ -54,6 +55,7 @@ def construction_company_page():
                 """, (money, st.session_state.company_id))
                 conn.commit()
                 st.success("Money added successfully!")
+    
     elif choice=="Place Orders":
         conn = create_connection()
         cursor = conn.cursor()
@@ -94,16 +96,17 @@ def construction_company_page():
                     st.success("Order made successfully")
                 else:
                     st.error("Insufficient balance")
-    elif choice=="Check Inventory":
+    
+    elif choice == "Check Inventory":
         conn = create_connection()
         cursor = conn.cursor()
         
-        # Fetch inventory for the construction company
+        # Fetch inventory for the current construction company based on Construction_Company_Id
         cursor.execute("""
             SELECT Product_name, Quantity 
             FROM Company_Inventory 
-            WHERE Construction_Company_name = %s
-        """, (company_name,))
+            WHERE Construction_Company_Id = %s
+        """, (st.session_state.company_id,))  # Use the current company's ID
         
         data = cursor.fetchall()
         columns = ["Product Name", "Quantity"]  # Define the columns for the DataFrame
@@ -118,39 +121,50 @@ def construction_company_page():
             st.dataframe(df)
         else:
             st.warning("No products in inventory for this company.")
+
     
-    elif choice=="Delete from inventory":
+    elif choice == "Delete from inventory":
         conn = create_connection()
         cursor = conn.cursor()
+
+        # Select inventory items for the current construction company
         cursor.execute("""
-        select * from Company_Inventory where Construction_Company_Name=(SELECT Construction_Company_name 
-        FROM Construction_Company 
-        WHERE Construction_Company_id = %s)
-        """,(st.session_state.company_id,))
-        
-        result=cursor.fetchall()
+            SELECT Product_name, Quantity 
+            FROM Company_Inventory 
+            WHERE Construction_Company_Id = %s
+        """, (st.session_state.company_id,))
+
+        result = cursor.fetchall()
         columns = cursor.column_names
         df = pd.DataFrame(result, columns=columns)
         st.dataframe(df)
+
+        # Form to remove items from inventory
         with st.form("remove from inventory"):
-            inventory_id=st.selectbox("select product to remove/delete",options=df["Inventory_id"])
-            quantity=st.number_input("how many to remove?",min_value=1)
-            if st.form_submit_button("submit"):
+            product_name = st.selectbox("Select product to remove/delete", options=df["Product_name"])
+            quantity_to_remove = st.number_input("How many to remove?", min_value=1)
+            
+            if st.form_submit_button("Submit"):
+                # Update the inventory quantity for the selected product
                 update_query = """
-                UPDATE Company_Inventory AS outer_ci
-                JOIN (
-                SELECT Inventory_id, Quantity - %s AS new_quantity
-                FROM Company_Inventory
-                WHERE Inventory_id = %s
-                ) AS subquery
-                ON outer_ci.inventory_id = subquery.inventory_id
-                SET outer_ci.quantity = subquery.new_quantity
-                WHERE outer_ci.inventory_id = %s;
+                UPDATE Company_Inventory 
+                SET Quantity = Quantity - %s 
+                WHERE Construction_Company_Id = %s AND Product_name = %s
                 """
-                cursor.execute(update_query, (quantity, inventory_id, inventory_id))
-                cursor.execute("""delete from Company_Inventory where Inventory_id=%s and Quantity<=0""",(inventory_id,))
+                cursor.execute(update_query, (quantity_to_remove, st.session_state.company_id, product_name))
+                
+                # Delete the product from inventory if quantity is zero or less
+                cursor.execute("""
+                    DELETE FROM Company_Inventory 
+                    WHERE Construction_Company_Id = %s AND Product_name = %s AND Quantity <= 0
+                """, (st.session_state.company_id, product_name))
+
                 conn.commit()
-                st.success("inventory updated")
+                st.success("Inventory updated successfully!")
+
+        cursor.close()
+        conn.close()
+
         
     elif choice=="Check transactions":
         conn = create_connection()

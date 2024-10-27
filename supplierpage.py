@@ -140,10 +140,6 @@ def supplier_company_page():
                         cursor.execute("SELECT Product_name FROM Product_info WHERE Product_id = %s", (product_id,))
                         product_name = cursor.fetchone()[0]
                         
-                        # Fetch the construction company name
-                        cursor.execute("SELECT Construction_Company_name FROM Construction_Company WHERE Construction_Company_id = %s", (construction_company_id,))
-                        company_name = cursor.fetchone()[0]
-                        
                         # Check cash balance
                         cursor.execute("SELECT Cash_Balance FROM Construction_Company WHERE Construction_Company_id = %s", (construction_company_id,))
                         cash_balance = cursor.fetchone()[0]
@@ -159,8 +155,8 @@ def supplier_company_page():
                             # Check if the product exists in the inventory of the construction company
                             cursor.execute("""
                                 SELECT Quantity FROM Company_Inventory 
-                                WHERE Construction_Company_name = %s AND Product_name = %s
-                            """, (company_name, product_name))
+                                WHERE Construction_Company_Id = %s AND Product_name = %s
+                            """, (construction_company_id, product_name))
                             existing_quantity = cursor.fetchone()
                             
                             if existing_quantity:
@@ -168,14 +164,14 @@ def supplier_company_page():
                                 cursor.execute("""
                                     UPDATE Company_Inventory 
                                     SET Quantity = Quantity + %s 
-                                    WHERE Construction_Company_name = %s AND Product_name = %s
-                                """, (quantity, company_name, product_name))
+                                    WHERE Construction_Company_Id = %s AND Product_name = %s
+                                """, (quantity, construction_company_id, product_name))
                             else:
                                 # Insert a new record into Company_Inventory
                                 cursor.execute("""
-                                    INSERT INTO Company_Inventory (Construction_Company_name, Product_name, Quantity) 
+                                    INSERT INTO Company_Inventory (Construction_Company_Id, Product_name, Quantity) 
                                     VALUES (%s, %s, %s)
-                                """, (company_name, product_name, quantity))
+                                """, (construction_company_id, product_name, quantity))
                             
                             # Update the status of the order to Accepted and set Shipment_Company_Id
                             cursor.execute("""
@@ -187,7 +183,7 @@ def supplier_company_page():
                             conn.commit()
                             st.success(f"Order {order_id} has been delivered successfully!")
                         else:
-                            st.error(f"Construction company {company_name} has insufficient balance.")
+                            st.error(f"Construction company with ID {construction_company_id} has insufficient balance.")
                     else:
                         st.error("Invalid Order ID or the order is not pending.")
             else:  # Reject
@@ -199,6 +195,10 @@ def supplier_company_page():
                 """, (order_id,))
                 conn.commit()
                 st.success(f"Order {order_id} has been rejected successfully!")
+
+        cursor.close()
+        conn.close()
+
     
     elif role == "Delete Product":
         conn = create_connection()
