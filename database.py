@@ -6,16 +6,15 @@ def create_connection():
         host="localhost",
         user="root",
         password=os.getenv('db_password'),
-        database=os.getenv('database')
+        database="dbms_project_testing1"
     )
     return connection
 
-# Create required tables
 def create_tables():
     conn = create_connection()
     cursor = conn.cursor()
 
-    # Create Admin Table
+    # Admin Table
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS Admin (
             Admin_id VARCHAR(50) PRIMARY KEY,
@@ -26,7 +25,7 @@ def create_tables():
         )
     """)
 
-    # Create Construction_Company Table
+    # Construction_Company Table
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS Construction_Company (
             Construction_Company_id VARCHAR(50) PRIMARY KEY,
@@ -37,7 +36,7 @@ def create_tables():
         )
     """)
 
-    # Create Supplier_Company Table
+    # Supplier_Company Table
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS Supplier_Company (
             Supplier_Company_id VARCHAR(50) PRIMARY KEY,
@@ -46,7 +45,7 @@ def create_tables():
         )
     """)
 
-    # Create Shipment_Company Table
+    # Shipment_Company Table
     cursor.execute("""  
         CREATE TABLE IF NOT EXISTS Shipment_Company (
             Shipment_Company_id VARCHAR(50) PRIMARY KEY,
@@ -54,7 +53,7 @@ def create_tables():
         )
     """)
 
-    # Insert 2 shipment companies by default
+    # 2 Shipment companies by default
     shipment_companies = [
         ("DHL", "DHL Group"),
         ("FDX", "FedEx Corp")
@@ -67,18 +66,19 @@ def create_tables():
             WHERE NOT EXISTS (SELECT 1 FROM Shipment_Company WHERE Shipment_Company_id = %s)
         """, (shipment_id, company_name, shipment_id))
 
-    # Product_info table
+    # Product_info Table
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS Product_info (
             Product_id VARCHAR(50) PRIMARY KEY,
             Product_name VARCHAR(100) NOT NULL,
             Product_price DECIMAL(10, 2) NOT NULL,
             Supplier_Company_id VARCHAR(50),
+            Stock INT DEFAULT 10000,
             FOREIGN KEY (Supplier_Company_id) REFERENCES Supplier_Company(Supplier_Company_id)
         )
     """)
 
-    # Order_info table with Shipment_Company_Id column
+    # Order_info Table
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS Order_info (
             Order_id VARCHAR(50) PRIMARY KEY,
@@ -96,16 +96,17 @@ def create_tables():
         )
     """)
 
-    # Company_Inventory table
+    # Company_Inventory Table
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS Company_Inventory (
-            Inventory_id INT AUTO_INCREMENT PRIMARY KEY,
-            Construction_Company_name VARCHAR(100) NOT NULL,
+            Construction_Company_Id VARCHAR(50) NOT NULL,
             Product_name VARCHAR(100) NOT NULL,
-            Quantity INT NOT NULL
+            Quantity INT NOT NULL,
+            FOREIGN KEY (Construction_Company_Id) REFERENCES Construction_Company(Construction_Company_id)
         )
     """)
-    #procedure creation
+    
+    # Procedure for Order info
     cursor.execute("""
                 drop procedure if exists get_order_info;
             """)
@@ -122,6 +123,39 @@ def create_tables():
                     end if;
                 end
             """)
+    
+    # Trigger for Stock update
+    cursor.execute("""
+        DROP TRIGGER IF EXISTS update_stock_on_order_accept;
+    """)
+    cursor.execute("""
+        CREATE TRIGGER update_stock_on_order_accept
+        AFTER UPDATE ON Order_info
+        FOR EACH ROW
+        BEGIN
+            DECLARE current_stock INT;
+
+            IF NEW.Status = 'Accepted' THEN
+                -- Check current stock
+                SELECT Stock INTO current_stock
+                FROM Product_info
+                WHERE Product_id = NEW.Product_id;
+
+                -- Restock if necessary
+                IF current_stock < NEW.Quantity THEN
+                    UPDATE Product_info
+                    SET Stock = current_stock + (NEW.Quantity * 2)
+                    WHERE Product_id = NEW.Product_id;
+                END IF;
+
+                -- Deduct the ordered quantity from stock
+                UPDATE Product_info
+                SET Stock = Stock - NEW.Quantity
+                WHERE Product_id = NEW.Product_id;
+            END IF;
+        END;
+    """)
+
     conn.commit()
     cursor.close()
     conn.close()
