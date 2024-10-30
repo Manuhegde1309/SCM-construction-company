@@ -1,4 +1,4 @@
-import os
+from streamlit_autorefresh import st_autorefresh
 import streamlit as st
 from dotenv import load_dotenv
 from database import create_tables
@@ -87,8 +87,9 @@ def login_signup_page():
                         st.error("Supplier ID must be alphanumeric")
 
 def main():
+    count = st_autorefresh(interval=5000)
     create_tables()
-
+    
     if "logged_in" not in st.session_state:
         st.session_state.logged_in = False
 
