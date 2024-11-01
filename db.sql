@@ -1,13 +1,13 @@
--- MySQL dump 10.13  Distrib 9.0.1, for macos14 (arm64)
+-- MySQL dump 10.13  Distrib 8.0.39, for Linux (x86_64)
 --
--- Host: localhost    Database: dbms_project_testing
+-- Host: localhost    Database: dbms_mini_project
 -- ------------------------------------------------------
--- Server version	9.0.1
+-- Server version	8.0.39
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!50503 SET NAMES utf8mb4 */;
+/*!50503 SET NAMES utf8 */;
 /*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
 /*!40103 SET TIME_ZONE='+00:00' */;
 /*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
@@ -64,6 +64,7 @@ CREATE TABLE `Company_Inventory` (
 
 LOCK TABLES `Company_Inventory` WRITE;
 /*!40000 ALTER TABLE `Company_Inventory` DISABLE KEYS */;
+INSERT INTO `Company_Inventory` VALUES ('c001','BRICKS',500),('c002','CEMENT',1000),('c001','CEMENT',20),('c005','IRON',50),('c001','STEEL',100);
 /*!40000 ALTER TABLE `Company_Inventory` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -92,7 +93,7 @@ CREATE TABLE `Construction_Company` (
 
 LOCK TABLES `Construction_Company` WRITE;
 /*!40000 ALTER TABLE `Construction_Company` DISABLE KEYS */;
-INSERT INTO `Construction_Company` VALUES ('c001','buildcorp',10000000.00,'a001'),('c002','ABC Constructions',10000000.00,'a002'),('c003','XYZ Builders',10000000.00,'a003'),('c004','summit builders',10000000.00,'a004'),('c005','peaky blinders',10000000.00,'a005'),('c006','beta builders',10000000.00,'a006');
+INSERT INTO `Construction_Company` VALUES ('c001','buildcorp',14830000.00,'a001'),('c002','ABC Constructions',10500000.00,'a002'),('c003','XYZ Builders',10000000.00,'a003'),('c004','summit builders',10000000.00,'a004'),('c005','peaky blinders',89985000.00,'a005'),('c006','beta builders',10000000.00,'a006');
 /*!40000 ALTER TABLE `Construction_Company` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -130,44 +131,9 @@ CREATE TABLE `Order_info` (
 
 LOCK TABLES `Order_info` WRITE;
 /*!40000 ALTER TABLE `Order_info` DISABLE KEYS */;
+INSERT INTO `Order_info` VALUES ('OR0754','p008','c001','s004','EMS',100,35000.00,'Accepted'),('OR1c7b','p003','c005','s002','TNT',50,15000.00,'Accepted'),('OR60af','p001','c002','s001','FDX',1000,500000.00,'Accepted'),('OR914b','p006','c004','s003',NULL,1000,400000.00,'Pending'),('ORbd4c','p001','c001','s001','FDX',20,10000.00,'Accepted'),('ORc062','p004','c002','s002',NULL,10,10000.00,'Rejected'),('ORcd3c','p002','c001','s001','DHL',500,125000.00,'Accepted'),('ORe9ee','p005','c001','s003',NULL,500,50000.00,'Pending'),('ORf79e','p007','c005','s004',NULL,100,15000.00,'Rejected');
 /*!40000 ALTER TABLE `Order_info` ENABLE KEYS */;
 UNLOCK TABLES;
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8mb4 */ ;
-/*!50003 SET character_set_results = utf8mb4 */ ;
-/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
-DELIMITER ;;
-/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `update_stock_on_order_accept` AFTER UPDATE ON `order_info` FOR EACH ROW BEGIN
-            DECLARE current_stock INT;
-
-            IF NEW.Status = 'Accepted' THEN
-                -- Check current stock
-                SELECT Stock INTO current_stock
-                FROM Product_info
-                WHERE Product_id = NEW.Product_id;
-
-                -- Restock if necessary
-                IF current_stock < NEW.Quantity THEN
-                    UPDATE Product_info
-                    SET Stock = current_stock + (NEW.Quantity * 2)
-                    WHERE Product_id = NEW.Product_id;
-                END IF;
-
-                -- Deduct the ordered quantity from stock
-                UPDATE Product_info
-                SET Stock = Stock - NEW.Quantity
-                WHERE Product_id = NEW.Product_id;
-            END IF;
-        END */;;
-DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
 
 --
 -- Table structure for table `Product_info`
@@ -194,7 +160,7 @@ CREATE TABLE `Product_info` (
 
 LOCK TABLES `Product_info` WRITE;
 /*!40000 ALTER TABLE `Product_info` DISABLE KEYS */;
-INSERT INTO `Product_info` VALUES ('p001','CEMENT',500.00,'s001',10000),('p002','BRICKS',250.00,'s001',10000),('p003','IRON',300.00,'s002',10000),('p004','GOLD',1000.00,'s002',10000),('p005','BRONZE',100.00,'s003',10000),('p006','SILVER',400.00,'s003',10000),('p007','COPPER',150.00,'s004',10000),('p008','STEEL',350.00,'s004',10000);
+INSERT INTO `Product_info` VALUES ('p001','CEMENT',500.00,'s001',8980),('p002','BRICKS',250.00,'s001',9500),('p003','IRON',300.00,'s002',9950),('p004','GOLD',1000.00,'s002',10000),('p005','BRONZE',100.00,'s003',10000),('p006','SILVER',400.00,'s003',10000),('p007','COPPER',150.00,'s004',10000),('p008','STEEL',350.00,'s004',9900);
 /*!40000 ALTER TABLE `Product_info` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -258,4 +224,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-10-30  9:29:49
+-- Dump completed on 2024-11-01 14:54:40

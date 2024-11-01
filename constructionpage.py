@@ -247,7 +247,7 @@ def construction_company_page():
 
         if orders:
             columns = ["Order_id", "Product_id", "Construction_Company_Id", "Supplier_Company_Id", 
-                       "Quantity", "Cost", "Order_date", "Status"]
+                    "Shipment", "Quantity", "Cost", "Status"]
             df = pd.DataFrame(orders, columns=columns)
             df.index = range(1, len(df) + 1)
             st.header("Company Transaction History")
