@@ -74,7 +74,7 @@ def create_tables():
         CREATE TABLE IF NOT EXISTS Product_info (
             Product_id VARCHAR(50) PRIMARY KEY,
             Product_name VARCHAR(100) NOT NULL,
-            Product_price DECIMAL(10, 2) NOT NULL,
+            Product_price DECIMAL(12, 2) NOT NULL,
             Supplier_Company_id VARCHAR(50),
             Stock INT DEFAULT 10000,
             FOREIGN KEY (Supplier_Company_id) REFERENCES Supplier_Company(Supplier_Company_id)
@@ -90,7 +90,7 @@ def create_tables():
             Supplier_Company_Id VARCHAR(50),
             Shipment_Company_Id VARCHAR(50) DEFAULT NULL,
             Quantity INT NOT NULL,
-            Cost DECIMAL(10, 2),
+            Cost DECIMAL(12, 2),
             Status ENUM('Pending', 'Accepted', 'Rejected') DEFAULT 'Pending',
             FOREIGN KEY (Product_id) REFERENCES Product_info(Product_id),
             FOREIGN KEY (Construction_Company_Id) REFERENCES Construction_Company(Construction_Company_id),

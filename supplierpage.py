@@ -78,6 +78,8 @@ def supplier_company_page():
                     st.error("Product ID must be alphanumeric.")
                 elif product_price==None or product_price<=0:
                     st.error("Product price must be greater than 0")
+                elif product_name=="":
+                    st.error("Product name cannot be empty")
                 else:
                     # Call function to add the product
                     add_product(product_id, product_name, product_price)
@@ -257,22 +259,33 @@ def supplier_company_page():
 
             if st.button("Delete Product"):
                 try:
-                    # Temporarily disable foreign key checks
-                    cursor.execute("SET FOREIGN_KEY_CHECKS = 0;")
+                    cursor.execute("""
+                        SELECT COUNT(*) 
+                        FROM Order_info 
+                        WHERE Product_id = %s AND Status = 'Pending'
+                        """, (selected_product_id,))
+                    pending_orders_count = cursor.fetchone()[0]
 
-                    # Delete the selected product
-                    cursor.execute("DELETE FROM Product_info WHERE Product_id = %s", (selected_product_id,))
-                    conn.commit()
-
-                    # Re-enable foreign key checks
-                    cursor.execute("SET FOREIGN_KEY_CHECKS = 1;")
+                    if pending_orders_count > 0:
+                        st.warning("Cannot delete this product as there are pending orders.")
                     
-                    # Refresh and display the updated product list
-                    updated_df = get_current_products()
-                    updated_df.index = range(1, len(updated_df) + 1)
-                    product_table.write(updated_df)
+                    else:
+                        # Temporarily disable foreign key checks
+                        cursor.execute("SET FOREIGN_KEY_CHECKS = 0;")
 
-                    st.success(f"Product {selected_product_id} deleted successfully!")
+                        # Delete the selected product
+                        cursor.execute("DELETE FROM Product_info WHERE Product_id = %s", (selected_product_id,))
+                        conn.commit()
+
+                        # Re-enable foreign key checks
+                        cursor.execute("SET FOREIGN_KEY_CHECKS = 1;")
+                        
+                        # Refresh and display the updated product list
+                        updated_df = get_current_products()
+                        updated_df.index = range(1, len(updated_df) + 1)
+                        product_table.write(updated_df)
+
+                        st.success(f"Product {selected_product_id} deleted successfully!")
                 except mysql.connector.Error as err:
                     st.error(f"Error: {err}")
         else:
