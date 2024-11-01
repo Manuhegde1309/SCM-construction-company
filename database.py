@@ -6,7 +6,7 @@ def create_connection():
         host="localhost",
         user="root",
         password=os.getenv('db_password'),
-        database="dbms_project_testing1"
+        database="dbms_mini_project"
     )
     return connection
 
