@@ -415,5 +415,7 @@ def supplier_company_page():
             return pd.DataFrame(products, columns=["Product ID", "Product Name", "Product Price","Stock"])
         df = get_current_products()
         df.index = range(1, len(df) + 1)
-        st.write(df)
-        pass
+        if df.empty:
+            st.warning("No products added for this company.")
+        else:
+            st.write(df)
