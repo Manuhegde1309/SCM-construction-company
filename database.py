@@ -6,7 +6,7 @@ def create_connection():
         host="localhost",
         user="root",
         password=os.getenv('db_password'),
-        database="dbms_project_testing1"
+        database="dbms_mini_project"
     )
     return connection
 
@@ -53,11 +53,14 @@ def create_tables():
         )
     """)
 
-    # 2 Shipment companies by default
+    # 5 Shipment companies by default
     shipment_companies = [
-        ("DHL", "DHL Group"),
-        ("FDX", "FedEx Corp")
-    ]
+    ("DHL", "DHL Group"),
+    ("EMS", "Express Mail Service"),
+    ("FDX", "FedEx Corp"),
+    ("TNT", "TNT Express"),
+    ("UPS", "United Parcel Service")
+]
 
     for shipment_id, company_name in shipment_companies:
         cursor.execute("""

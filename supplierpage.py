@@ -112,7 +112,7 @@ def supplier_company_page():
             add_status = st.selectbox("Add status", ["Accept", "Reject"], key="authorize_order_status")
 
             if add_status == "Accept":
-                delivery_company = st.selectbox("Select Delivery Company", ["DHL Group", "FedEx Corp"], key="authorize_delivery_company")
+                delivery_company = st.selectbox("Select Delivery Company", ["DHL Group", "Express Mail Service", "FedEx Corp", "TNT Express", "United Parcel Service"], key="authorize_delivery_company")
                 submit_button = st.button("Deliver Order")
             else:
                 submit_button = st.button("Reject Order")
@@ -372,7 +372,7 @@ def supplier_company_page():
         orders=get_order_info(st.session_state.company_id,'SUPPLIER')
         if orders:
             columns = ["Order_id", "Product_id", "Construction_Company_Id", "Supplier_Company_Id", 
-                    "Quantity", "Cost", "Order_date", "Status"]  # Adjust as per your actual table schema
+                    "Shipment", "Quantity", "Cost", "Status"]
                         
             df = pd.DataFrame(orders, columns=columns)            
             df.index=range(1,len(df)+1)
