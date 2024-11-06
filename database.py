@@ -1,17 +1,16 @@
-import os
 import mysql.connector
 
-def create_connection():
+def create_connection(user,password):
     connection = mysql.connector.connect(
         host="localhost",
-        user="root",
-        password=os.getenv('db_password'),
-        database="dbms_mini_project"
+        user=user,
+        password=password,
+        database="dbms_project_testing"
     )
     return connection
 
-def create_tables():
-    conn = create_connection()
+def create_tables(user,password):
+    conn = create_connection(user,password)
     cursor = conn.cursor()
 
     # Admin Table
@@ -62,12 +61,12 @@ def create_tables():
     ("UPS", "United Parcel Service")
 ]
 
-    for shipment_id, company_name in shipment_companies:
-        cursor.execute("""
-            INSERT INTO Shipment_Company (Shipment_Company_id, Shipment_Company_name)
-            SELECT %s, %s
-            WHERE NOT EXISTS (SELECT 1 FROM Shipment_Company WHERE Shipment_Company_id = %s)
-        """, (shipment_id, company_name, shipment_id))
+    # for shipment_id, company_name in shipment_companies:
+    #     cursor.execute("""
+    #         INSERT INTO Shipment_Company (Shipment_Company_id, Shipment_Company_name)
+    #         SELECT %s, %s
+    #         WHERE NOT EXISTS (SELECT 1 FROM Shipment_Company WHERE Shipment_Company_id = %s)
+    #     """, (shipment_id, company_name, shipment_id))
 
     # Product_info Table
     cursor.execute("""
@@ -114,7 +113,7 @@ def create_tables():
                 drop procedure if exists get_order_info;
             """)
     cursor.execute("""
-                create procedure get_order_info(
+                create procedure if not exists get_order_info(
                     IN in_company_id VARCHAR(50),
                     IN company_type ENUM('CONSTRUCTION', 'SUPPLIER')
                 )

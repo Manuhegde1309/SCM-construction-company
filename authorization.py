@@ -1,4 +1,3 @@
-import os
 import mysql.connector
 import argon2
 from argon2 import PasswordHasher
@@ -18,7 +17,7 @@ def check_password(password, hashed):
 
 # Company name existence check functions
 def company_exists(company_name, company_type):
-    conn = create_connection()
+    conn = create_connection(st.session_state.sqluser,st.session_state.sqluserpassword)
     cursor = conn.cursor()
 
     table_name = "Construction_Company" if company_type == "Construction" else "Supplier_Company"
@@ -37,7 +36,7 @@ def signup_admin(firstname, middlename, lastname, password, company_name, admin_
         st.error("Construction company with this name already exists.")
         return False
 
-    conn = create_connection()
+    conn = create_connection(st.session_state.sqluser,st.session_state.sqluserpassword)
     cursor = conn.cursor()
 
     hashed_password = hash_password(password)
@@ -64,7 +63,7 @@ def signup_supplier(company_name, company_id, password):
         st.error("Supplier company with this name already exists.")
         return False
 
-    conn = create_connection()
+    conn = create_connection(st.session_state.sqluser,st.session_state.sqluserpassword)
     cursor = conn.cursor()
 
     hashed_password = hash_password(password)
@@ -85,7 +84,7 @@ def signup_supplier(company_name, company_id, password):
 
 # Login functions
 def login_user(company_id, password, role, admin_id=None):
-    conn = create_connection()
+    conn = create_connection(st.session_state.sqluser,st.session_state.sqluserpassword)
     cursor = conn.cursor()
 
     try:

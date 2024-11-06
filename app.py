@@ -6,10 +6,13 @@ from authorization import login_user, signup_admin, signup_supplier
 from constructionpage import construction_company_page
 from supplierpage import supplier_company_page
 
+# Load environment variables
 load_dotenv()
 
 def login_signup_page():
-    st.title("Login / Signup")
+    sqluserchoice = st.text_input("Select SQL user to run (root/other user)")
+    sqluserpassword = st.text_input("password")
+    st.header("Login / Signup")
     choice = st.radio("Select Action", ["Login", "Signup"])
 
     if choice == "Signup":
@@ -27,12 +30,18 @@ def login_signup_page():
                 password = st.text_input("Password", type="password")
                 
                 if st.form_submit_button("Sign Up"):
-                    if admin_id.isalnum() and company_id.isalnum():
+                    if not all([company_name, company_id, firstname, lastname, admin_id, password]):
+                        st.error("Please fill out all the fields")
+                    elif admin_id.isalnum() and company_id.isalnum():
                         if signup_admin(firstname, middlename, lastname, password, company_name, admin_id, company_id):
                             st.session_state.logged_in = True
                             st.session_state.user_role = "Construction Company"
                             st.session_state.company_id = company_id
+                            st.session_state.sqluser = sqluserchoice
+                            st.session_state.sqluserpassword = sqluserpassword
                             st.rerun()
+                        else:
+                            st.error("Signup failed")
                     else:
                         st.error("Admin ID and Company ID must be alphanumeric")
         else:
@@ -41,12 +50,18 @@ def login_signup_page():
                 company_id = st.text_input("Supplier Company ID (Alphanumeric)")
                 password = st.text_input("Password", type="password")
                 if st.form_submit_button("Sign Up"):
-                    if company_id.isalnum():
+                    if not all([company_name, company_id, password]):
+                        st.error("Please fill out all the fields")
+                    elif company_id.isalnum():
                         if signup_supplier(company_name, company_id, password):
                             st.session_state.logged_in = True
                             st.session_state.user_role = "Supplier Company"
                             st.session_state.company_id = company_id
+                            st.session_state.sqluser = sqluserchoice
+                            st.session_state.sqluserpassword = sqluserpassword
                             st.rerun()
+                        else:
+                            st.error("Signup failed")
                     else:
                         st.error("Company ID must be alphanumeric")
             
@@ -65,6 +80,8 @@ def login_signup_page():
                             st.session_state.logged_in = True
                             st.session_state.user_role = role
                             st.session_state.company_id = company_id
+                            st.session_state.sqluser = sqluserchoice
+                            st.session_state.sqluserpassword = sqluserpassword
                             st.rerun()
                         else:
                             st.error("Invalid credentials")
@@ -80,19 +97,32 @@ def login_signup_page():
                             st.session_state.logged_in = True
                             st.session_state.user_role = role
                             st.session_state.company_id = company_id
+                            st.session_state.sqluser = sqluserchoice
+                            st.session_state.sqluserpassword = sqluserpassword
                             st.rerun()
                         else:
                             st.error("Invalid credentials")
                     else:
                         st.error("Supplier ID must be alphanumeric")
-
+    
 def main():
     count = st_autorefresh(interval=5000)
-    create_tables()
     
+    # Initialize session state variables if they don't exist
     if "logged_in" not in st.session_state:
         st.session_state.logged_in = False
+    if "user_role" not in st.session_state:
+        st.session_state.user_role = None
+    if "company_id" not in st.session_state:
+        st.session_state.company_id = None
+    if "sqluser" not in st.session_state:
+        st.session_state.sqluser = None
+    if "sqluserpassword" not in st.session_state:
+        st.session_state.sqluserpassword = None
 
+    if st.session_state.sqluser=="root":
+        create_tables(st.session_state.sqluser,st.session_state.sqluserpassword)
+        
     if not st.session_state.logged_in:
         login_signup_page()
     else:
@@ -105,7 +135,8 @@ def main():
             st.session_state.logged_in = False
             st.session_state.user_role = None
             st.session_state.company_id = None
+            st.session_state.sqluser = None
+            st.session_state.sqluserpassword = None
             st.rerun()
-
 if __name__ == "__main__":
     main()
