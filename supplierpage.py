@@ -295,89 +295,96 @@ def supplier_company_page():
 
 
     elif role == "Update Product":
-        st.header("Update Product page")
-        conn = create_connection(st.session_state.sqluser,st.session_state.sqluserpassword)
-        cursor = conn.cursor()
-        
-        # Function to get current products
-        def get_current_products():
+            st.header("Update Product page")
+            conn = create_connection()
+            cursor = conn.cursor()
+            
+            # Function to get current products
+            def get_current_products():
+                cursor.execute("""
+                    SELECT Product_id, Product_name, Product_price 
+                    FROM Product_info 
+                    WHERE Supplier_Company_id = %s
+                """, (st.session_state.company_id,))
+                products = cursor.fetchall()
+                return pd.DataFrame(products, columns=["Product ID", "Product Name", "Product Price"])
+
+            st.subheader("Current Products")
+            product_table = st.empty()
+            
+            df = get_current_products()
+            df.index = range(1, len(df) + 1)
+            
+            product_table.write(df)
+
+            product_options = df["Product ID"].tolist()
+            selected_product_id = st.selectbox("Select the Product ID to Update:", product_options, key="update_product_selectbox")
+
             cursor.execute("""
-                SELECT Product_id, Product_name, Product_price 
+                SELECT Product_name, Product_price 
                 FROM Product_info 
-                WHERE Supplier_Company_id = %s
-            """, (st.session_state.company_id,))
-            products = cursor.fetchall()
-            return pd.DataFrame(products, columns=["Product ID", "Product Name", "Product Price"])
-
-        st.subheader("Current Products")
-        product_table = st.empty()
-        
-        df = get_current_products()
-        df.index = range(1, len(df) + 1)
-        
-        product_table.write(df)
-
-        product_options = df["Product ID"].tolist()
-        selected_product_id = st.selectbox("Select the Product ID to Update:", product_options, key="update_product_selectbox")
-
-        cursor.execute("""
-            SELECT Product_name, Product_price 
-            FROM Product_info 
-            WHERE Product_id = %s AND Supplier_Company_id = %s
-        """, (selected_product_id, st.session_state.company_id))
-        
-        product_details = cursor.fetchone()
-
-        if product_details:
-            current_product_name, current_product_price = product_details
+                WHERE Product_id = %s AND Supplier_Company_id = %s
+            """, (selected_product_id, st.session_state.company_id))
             
-            new_product_id = st.text_input("New Product ID (Leave blank to keep current)", value=selected_product_id, key="new_product_id")
+            product_details = cursor.fetchone()
 
-            new_product_price = st.number_input("New Product Price", value=float(current_product_price), format="%.2f", key="new_product_price")
-            
-            cursor.execute("""
-                SELECT COUNT(*) 
-                FROM Order_info 
-                WHERE Product_id = %s AND Status = 'Pending'
-            """, (selected_product_id,))
-            pending_orders_count = cursor.fetchone()[0]
+            if product_details:
+                current_product_name, current_product_price = product_details
+                
+                new_product_id = st.text_input("New Product ID (Leave blank to keep current)", value=selected_product_id, key="new_product_id")
 
-            if pending_orders_count > 0:
-                st.warning("Cannot update this product as there are pending orders.")
+                new_product_price = st.number_input("New Product Price", value=float(current_product_price), format="%.2f", key="new_product_price")
+
+                cursor.execute("""
+                    SELECT COUNT(*) 
+                    FROM Order_info 
+                    WHERE Product_id = %s AND Status = 'Pending'
+                """, (selected_product_id,))
+                pending_orders_count = cursor.fetchone()[0]
+
+                if pending_orders_count > 0:
+                    st.warning("Cannot update this product as there are pending orders.")
+                else:
+                    if st.button("Update Product"):
+                        if new_product_price <= 0:
+                            st.error("Product price must be greater than 1.")
+                        else:
+                            try:
+                                # Temporarily disable foreign key checks
+                                cursor.execute("SET FOREIGN_KEY_CHECKS = 0;")
+                                
+                                if new_product_id and new_product_price >= 1:
+                                    cursor.execute("""
+                                        UPDATE Product_info 
+                                        SET Product_id = %s, Product_price = %s 
+                                        WHERE Product_id = %s AND Supplier_Company_id = %s
+                                    """, (new_product_id, new_product_price, selected_product_id, st.session_state.company_id))
+                                else:
+                                    cursor.execute("""
+                                        UPDATE Product_info 
+                                        SET Product_price = %s 
+                                        WHERE Product_id = %s AND Supplier_Company_id = %s
+                                    """, (new_product_price, selected_product_id, st.session_state.company_id))
+                                
+                                conn.commit()
+
+                                # Re-enable foreign key checks
+                                cursor.execute("SET FOREIGN_KEY_CHECKS = 1;")
+
+                                updated_df = get_current_products()
+                                product_table.subheader("Current Products")
+                                product_table.write(updated_df)
+                                
+                                st.success("Product updated successfully!")
+                            except mysql.connector.Error as err:
+                                # Re-enable foreign key checks in case of error
+                                cursor.execute("SET FOREIGN_KEY_CHECKS = 1;")
+                                st.error(f"Error: {err}")
             else:
-                if st.button("Update Product"):
-                    if new_product_price <= 0:
-                        st.error("Product price must be greater than 1.")
-                    else:
-                        try:
-                            if new_product_id and new_product_price >= 1:
-                                cursor.execute("""
-                                    UPDATE Product_info 
-                                    SET Product_id = %s, Product_price = %s 
-                                    WHERE Product_id = %s AND Supplier_Company_id = %s
-                                """, (new_product_id, new_product_price, selected_product_id, st.session_state.company_id))
-                            else:
-                                cursor.execute("""
-                                    UPDATE Product_info 
-                                    SET Product_price = %s 
-                                    WHERE Product_id = %s AND Supplier_Company_id = %s
-                                """, (new_product_price, selected_product_id, st.session_state.company_id))
-                            
-                            conn.commit()
-                            
-                            updated_df = get_current_products()
-                            product_table.subheader("Current Products")
-                            product_table.write(updated_df)
-                            
-                            st.success("Product updated successfully!")
-                        except mysql.connector.Error as err:
-                            st.error(f"Error: {err}")
-        else:
-            st.warn("Product ID not found or does not belong to your company.")
-        
-        cursor.close()
-        conn.close()
-
+                st.warning("Product ID not found or does not belong to your company.")
+            
+            cursor.close()
+            conn.close()
     elif role=="Check transactions":
         conn = create_connection(st.session_state.sqluser,st.session_state.sqluserpassword)
         cursor = conn.cursor()
