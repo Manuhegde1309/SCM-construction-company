@@ -116,41 +116,49 @@ def construction_company_page():
             Quantity = st.number_input("Quantity", key="order_quantity", value=None)
 
             if st.form_submit_button("Place Orders"):
-                if Quantity == None or Quantity <= 0:
+                if Quantity is None or Quantity <= 0:
                     st.error("Please enter a positive quantity.")
                 else:
-                    # Fetch Supplier_Company_id for the product_id
-                    cursor.execute("""
-                        SELECT Supplier_Company_id FROM Product_info WHERE Product_id = %s
-                    """, (product_id,))
-                    placeholder = cursor.fetchone()
-                    supply_company_id = placeholder[0] if placeholder else "none"
+                    query = """
+                        WITH ProductDetails AS (
+                            SELECT 
+                                Supplier_Company_id,
+                                Product_price
+                            FROM Product_info
+                            WHERE Product_id = %s
+                        ),
+                        OrderDetails AS (
+                            SELECT 
+                                (pd.Product_price * %s) AS total_price,
+                                cc.Cash_Balance
+                            FROM ProductDetails pd
+                            JOIN Construction_Company cc ON cc.Construction_Company_id = %s
+                        )
+                        SELECT 
+                            pd.Supplier_Company_id,
+                            od.total_price,
+                            od.Cash_Balance
+                        FROM ProductDetails pd, OrderDetails od
+                    """
+                    cursor.execute(query, (product_id, Quantity, st.session_state.company_id))
+                    result = cursor.fetchone()
 
-                    # Calculate total price based on quantity
-                    cursor.execute("""
-                        SELECT (Product_price * %s) AS total_price FROM Product_info 
-                        WHERE Product_id = %s AND Supplier_Company_id = %s
-                    """, (Quantity, product_id, supply_company_id))
-                    price = cursor.fetchone()
-                    t_price = price[0] if price else 0
+                    if result:
+                        supply_company_id, t_price, cash_balance = result
 
-                    # Check available balance
-                    cursor.execute("""
-                        SELECT Cash_Balance FROM Construction_Company WHERE Construction_Company_id = %s
-                    """, (st.session_state.company_id,))
-                    minprice = cursor.fetchone()
-
-                    if minprice and minprice[0] > t_price:
-                        orderId = "OR" + str(uuid.uuid4().hex[:4])
-                        # Insert new order information into Order_info
-                        cursor.execute("""
-                            INSERT INTO Order_info(Order_id, Product_id, Construction_Company_Id, Supplier_Company_Id, Quantity, Cost) 
-                            VALUES (%s, %s, %s, %s, %s, %s)
-                        """, (orderId, product_id, st.session_state.company_id, supply_company_id, Quantity, t_price))
-                        conn.commit()
-                        st.success("Order made successfully")
+                        if cash_balance > t_price:
+                            orderId = "OR" + str(uuid.uuid4().hex[:4])
+                            # Insert new order information into Order_info
+                            cursor.execute("""
+                                INSERT INTO Order_info(Order_id, Product_id, Construction_Company_Id, Supplier_Company_Id, Quantity, Cost) 
+                                VALUES (%s, %s, %s, %s, %s, %s)
+                            """, (orderId, product_id, st.session_state.company_id, supply_company_id, Quantity, t_price))
+                            conn.commit()
+                            st.success("Order made successfully")
+                        else:
+                            st.error("Insufficient balance")
                     else:
-                        st.error("Insufficient balance")
+                        st.error("Error fetching product or balance details")
 
         cursor.close()
         conn.close()
