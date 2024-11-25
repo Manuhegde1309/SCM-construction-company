@@ -106,7 +106,7 @@ def login_signup_page():
                         st.error("Supplier ID must be alphanumeric")
     
 def main():
-    count = st_autorefresh(interval=5000)
+    #count = st_autorefresh(interval=5000)
     
     # Initialize session state variables if they don't exist
     if "logged_in" not in st.session_state:
