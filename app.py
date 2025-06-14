@@ -1,4 +1,3 @@
-from streamlit_autorefresh import st_autorefresh
 import streamlit as st
 from dotenv import load_dotenv
 from database import create_tables
@@ -10,8 +9,6 @@ from supplierpage import supplier_company_page
 load_dotenv()
 
 def login_signup_page():
-    sqluserchoice = st.text_input("Select SQL user to run (root/other user)")
-    sqluserpassword = st.text_input("password")
     st.header("Login / Signup")
     choice = st.radio("Select Action", ["Login", "Signup"])
 
@@ -37,8 +34,6 @@ def login_signup_page():
                             st.session_state.logged_in = True
                             st.session_state.user_role = "Construction Company"
                             st.session_state.company_id = company_id
-                            st.session_state.sqluser = sqluserchoice
-                            st.session_state.sqluserpassword = sqluserpassword
                             st.rerun()
                         else:
                             st.error("Signup failed")
@@ -57,8 +52,7 @@ def login_signup_page():
                             st.session_state.logged_in = True
                             st.session_state.user_role = "Supplier Company"
                             st.session_state.company_id = company_id
-                            st.session_state.sqluser = sqluserchoice
-                            st.session_state.sqluserpassword = sqluserpassword
+                            
                             st.rerun()
                         else:
                             st.error("Signup failed")
@@ -80,8 +74,7 @@ def login_signup_page():
                             st.session_state.logged_in = True
                             st.session_state.user_role = role
                             st.session_state.company_id = company_id
-                            st.session_state.sqluser = sqluserchoice
-                            st.session_state.sqluserpassword = sqluserpassword
+                            
                             st.rerun()
                         else:
                             st.error("Invalid credentials")
@@ -97,8 +90,7 @@ def login_signup_page():
                             st.session_state.logged_in = True
                             st.session_state.user_role = role
                             st.session_state.company_id = company_id
-                            st.session_state.sqluser = sqluserchoice
-                            st.session_state.sqluserpassword = sqluserpassword
+                           
                             st.rerun()
                         else:
                             st.error("Invalid credentials")
@@ -115,14 +107,7 @@ def main():
         st.session_state.user_role = None
     if "company_id" not in st.session_state:
         st.session_state.company_id = None
-    if "sqluser" not in st.session_state:
-        st.session_state.sqluser = None
-    if "sqluserpassword" not in st.session_state:
-        st.session_state.sqluserpassword = None
 
-    if st.session_state.sqluser=="root":
-        create_tables(st.session_state.sqluser,st.session_state.sqluserpassword)
-        
     if not st.session_state.logged_in:
         login_signup_page()
     else:
@@ -135,8 +120,7 @@ def main():
             st.session_state.logged_in = False
             st.session_state.user_role = None
             st.session_state.company_id = None
-            st.session_state.sqluser = None
-            st.session_state.sqluserpassword = None
+
             st.rerun()
 if __name__ == "__main__":
     main()

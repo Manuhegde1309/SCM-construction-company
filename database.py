@@ -1,16 +1,20 @@
 import mysql.connector
+import dotenv
+import os
 
-def create_connection(user,password):
+
+dotenv.load_dotenv()
+def create_connection():
     connection = mysql.connector.connect(
-        host="localhost",
-        user=user,
-        password=password,
-        database="dbms_project_testing"
+        host=os.getenv("DB_HOST"),
+        user=os.getenv("DB_USERNAME"),
+        password=os.getenv("DB_PASSWORD"),
+        database=os.getenv("DB_DATABASE")
     )
     return connection
 
-def create_tables(user,password):
-    conn = create_connection(user,password)
+def create_tables():
+    conn = create_connection()
     cursor = conn.cursor()
 
     # Admin Table

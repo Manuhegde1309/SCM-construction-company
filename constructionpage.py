@@ -5,7 +5,7 @@ import pandas as pd
 import mysql.connector
 
 def get_order_info(company_id, company_type):
-    conn = create_connection(st.session_state.sqluser,st.session_state.sqluserpassword)
+    conn = create_connection()
     cursor = conn.cursor()
     if conn and cursor:
         try:
@@ -22,7 +22,7 @@ def get_order_info(company_id, company_type):
     return []
 
 def construction_company_page():
-    conn = create_connection(st.session_state.sqluser,st.session_state.sqluserpassword)
+    conn = create_connection()
     cursor = conn.cursor()
 
     # Fetch company name for the session's company_id
@@ -50,7 +50,7 @@ def construction_company_page():
         st.header("Add money/balance")
 
         def get_current_balance():
-            conn = create_connection(st.session_state.sqluser,st.session_state.sqluserpassword)
+            conn = create_connection()
             cursor = conn.cursor()
             cursor.execute(
                 "SELECT Cash_Balance FROM Construction_Company WHERE Construction_Company_id = %s", 
@@ -73,7 +73,7 @@ def construction_company_page():
                 if money == None or money <= 0:
                     st.error("Please enter an amount greater than 1 to add.")
                 else:
-                    conn = create_connection(st.session_state.sqluser,st.session_state.sqluserpassword)
+                    conn = create_connection()
                     cursor = conn.cursor()
                     try:
                         # Update cash balance in Construction_Company
@@ -94,7 +94,7 @@ def construction_company_page():
                         conn.close()
 
     elif choice == "Place Orders":
-        conn = create_connection(st.session_state.sqluser,st.session_state.sqluserpassword)
+        conn = create_connection()
         cursor = conn.cursor()
 
         # Fetch product information excluding the "Stock" column
@@ -164,7 +164,7 @@ def construction_company_page():
         conn.close()
 
     elif choice == "Check Inventory":
-        conn = create_connection(st.session_state.sqluser,st.session_state.sqluserpassword)
+        conn = create_connection()
         cursor = conn.cursor()
         
         # Fetch inventory for the current construction company
@@ -189,7 +189,7 @@ def construction_company_page():
             st.warning("No products in inventory for this company.")
 
     elif choice == "Delete from inventory":
-        conn = create_connection(st.session_state.sqluser,st.session_state.sqluserpassword)
+        conn = create_connection()
         cursor = conn.cursor()
 
         def get_current_inventory():
@@ -247,7 +247,7 @@ def construction_company_page():
         conn.close()
 
     elif choice == "Check transactions":
-        conn = create_connection(st.session_state.sqluser,st.session_state.sqluserpassword)
+        conn = create_connection()
         cursor = conn.cursor()
 
         # Retrieve order information for the construction company

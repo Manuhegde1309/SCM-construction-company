@@ -5,7 +5,7 @@ import pandas as pd
 
 
 def get_order_info(company_id, company_type):
-    conn = create_connection(st.session_state.sqluser,st.session_state.sqluserpassword)
+    conn = create_connection()
     cursor=conn.cursor()
     if conn and cursor:
         try:
@@ -23,7 +23,7 @@ def get_order_info(company_id, company_type):
 def add_product(product_id, product_name, product_price):
     product_name = product_name.upper()
 
-    conn = create_connection(st.session_state.sqluser,st.session_state.sqluserpassword)
+    conn = create_connection()
     cursor = conn.cursor()
 
     supplier_company_id = st.session_state.company_id
@@ -44,7 +44,7 @@ def add_product(product_id, product_name, product_price):
         conn.close()
 
 def supplier_company_page():
-    conn = create_connection(st.session_state.sqluser,st.session_state.sqluserpassword)
+    conn = create_connection()
     cursor = conn.cursor()
 
     # Fetch the supplier company name using the company_id stored in session state
@@ -85,7 +85,7 @@ def supplier_company_page():
 
 
     elif role == "Authorize Orders":
-        conn = create_connection(st.session_state.sqluser,st.session_state.sqluserpassword)
+        conn = create_connection()
         cursor = conn.cursor()
         st.header("Authorize Orders Page")
 
@@ -228,7 +228,7 @@ def supplier_company_page():
 
     
     elif role == "Delete Product":
-        conn = create_connection(st.session_state.sqluser,st.session_state.sqluserpassword)
+        conn = create_connection()
         cursor = conn.cursor()
 
         st.header("Delete Products page")
@@ -386,7 +386,7 @@ def supplier_company_page():
             cursor.close()
             conn.close()
     elif role=="Check transactions":
-        conn = create_connection(st.session_state.sqluser,st.session_state.sqluserpassword)
+        conn = create_connection()
         cursor = conn.cursor()
         orders=get_order_info(st.session_state.company_id,'SUPPLIER')
         if orders:
@@ -407,7 +407,7 @@ def supplier_company_page():
     elif role=="Products info":
         st.header("Products info page")
         st.subheader("All Products")
-        conn = create_connection(st.session_state.sqluser,st.session_state.sqluserpassword)
+        conn = create_connection()
         cursor = conn.cursor()
         
         # Function to get current products
